@@ -22,6 +22,7 @@ ALWAYS_COOPERATE = "AlwaysCooperate"
 ALWAYS_DEFECT = "AlwaysDefect"
 TIT_FOR_TAT = "TitForTat"
 GRIM_TRIGGER = "GrimTrigger"
+RANDOM = "Random"
 
 # starting set of strategies
 STARTER_STRATEGIES = (
@@ -29,6 +30,7 @@ STARTER_STRATEGIES = (
     ALWAYS_DEFECT,
     TIT_FOR_TAT,
     GRIM_TRIGGER,
+    RANDOM
 )
 
 
@@ -122,6 +124,10 @@ def strategy_constraints(strategy: str, own_moves, opponent_moves):
             opponent_defected_before = Or(*[opponent_moves[past] == DEFECT for past in range(round_index)])
             constraints.append(own_moves[round_index] == If(opponent_defected_before, DEFECT, COOPERATE))
         return constraints
+    
+    if strategy == RANDOM:
+        # RANDOM strategy has no constraints—any move (COOPERATE or DEFECT) is valid
+        return []
 
     raise ValueError(f"unknown strategy: {strategy}")
 
