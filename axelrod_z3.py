@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
+import random
 
 from z3 import And, If, Int, ModelRef, Or, Solver, Sum, sat
 
@@ -126,8 +127,13 @@ def strategy_constraints(strategy: str, own_moves, opponent_moves):
         return constraints
     
     if strategy == RANDOM:
-        # RANDOM strategy has no constraints—any move (COOPERATE or DEFECT) is valid
-        return []
+        # RANDOM strategy: use Python's random to generate a random sequence,
+        # then constrain Z3 to follow it
+        constraints = []
+        for move in own_moves:
+            random_choice = random.choice([COOPERATE, DEFECT])
+            constraints.append(move == random_choice)
+        return constraints
 
     raise ValueError(f"unknown strategy: {strategy}")
 
@@ -157,8 +163,8 @@ def solve_match(config: MatchConfig) -> MatchResult:
 
     # These lists are the temporal trace.
     # So for example, left_moves[0] is the left player's move in round 1.
-    left_moves = [Int(f"{config.name}_{config.left.name}_move_{round_index}") for round_index in range(config.rounds)]
-    right_moves = [Int(f"{config.name}_{config.right.name}_move_{round_index}") for round_index in range(config.rounds)]
+    left_moves = [Int(f"{config.name}_left_move_{round_index}") for round_index in range(config.rounds)]
+    right_moves = [Int(f"{config.name}_right_move_{round_index}") for round_index in range(config.rounds)]
 
     # every move must be legal
     for move in left_moves + right_moves:
