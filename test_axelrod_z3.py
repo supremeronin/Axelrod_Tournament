@@ -66,12 +66,12 @@ def test_grim_trigger_defects_after_first_opponent_defection():
 
 
 def test_round_robin_scores_show_best_strategy_for_current_scope():
-    # checks the leaderboard for the current small strtegy set we have
+    # checks the leaderboard for the current small strategy set we have
     results = strategy_round_robin(8)
     totals = totals_by_strategy(results)
 
-    assert totals[ALWAYS_DEFECT] == 64
-    assert totals[TIT_FOR_TAT] == 55
-    assert totals[GRIM_TRIGGER] == 55
-    assert totals[ALWAYS_COOPERATE] == 48
-    assert best_strategies(results) == [(ALWAYS_DEFECT, 64)]
+    assert totals[ALWAYS_DEFECT] == 80
+    assert totals[TIT_FOR_TAT] == 103
+    assert totals[GRIM_TRIGGER] == 103
+    assert totals[ALWAYS_COOPERATE] == 96
+    assert best_strategies(results) == [(GRIM_TRIGGER, 103), (TIT_FOR_TAT, 103)]

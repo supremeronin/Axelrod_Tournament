@@ -225,7 +225,7 @@ def strategy_round_robin(rounds: int, strategies: Iterable[str] = STARTER_STRATE
     matches = []
     for left_index, left_strategy in enumerate(strategies):
         for right_index, right_strategy in enumerate(strategies):
-            if left_index >= right_index:
+            if left_index > right_index:
                 continue
             matches.append(
                 solve_match(
