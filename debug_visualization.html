@@ -1,0 +1,1654 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Axelrod Tournament Debug Visual</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f7f8fb;
+            --ink: #17202a;
+            --muted: #5f6b7a;
+            --line: #d9dee8;
+            --panel: #ffffff;
+            --coop: #2d9d68;
+            --defect: #c94c4c;
+            --accent: #315fbd;
+            --accent-light: #dfe8ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        main {
+            width: min(1100px, calc(100% - 32px));
+            margin: 28px auto 40px;
+        }
+
+        header {
+            margin-bottom: 22px;
+        }
+
+        h1, h2, p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 30px;
+            line-height: 1.15;
+        }
+
+        h2 {
+            font-size: 20px;
+            line-height: 1.25;
+        }
+
+        p {
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 14px;
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        .match,
+        .section-heading,
+        .leaderboard {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 18px;
+            margin-top: 16px;
+        }
+
+        .section-heading {
+            padding: 16px 18px;
+            background: #fdfefe;
+        }
+
+        .match-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: baseline;
+            margin-bottom: 16px;
+        }
+
+        .trace-grid {
+            display: grid;
+            grid-template-columns: minmax(110px, 160px) 1fr;
+            gap: 8px 12px;
+            align-items: center;
+        }
+
+        .player-name {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .rounds,
+        .moves,
+        .scores {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(34px, 1fr));
+            gap: 6px;
+        }
+
+        .round-cell,
+        .score-cell,
+        .move {
+            min-height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .round-cell,
+        .score-cell {
+            background: #eef1f6;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .move {
+            color: white;
+            font-size: 15px;
+        }
+
+        .cooperate {
+            background: var(--coop);
+        }
+
+        .defect {
+            background: var(--defect);
+        }
+
+        .totals {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--line);
+            margin-top: 16px;
+            padding-top: 12px;
+            color: var(--muted);
+        }
+
+        .leader-table {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .leader-row {
+            display: grid;
+            grid-template-columns: 32px minmax(120px, 190px) 1fr 58px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .leader-rank,
+        .leader-score {
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .leader-name {
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .bar-wrap {
+            height: 20px;
+            background: #eef1f6;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .bar {
+            height: 100%;
+            background: var(--accent);
+        }
+
+        .winner .leader-name {
+            color: var(--accent);
+        }
+
+        .winner .bar-wrap {
+            background: var(--accent-light);
+        }
+
+        .winner-text {
+            border-top: 1px solid var(--line);
+            margin-top: 16px;
+            padding-top: 12px;
+        }
+
+        @media (max-width: 720px) {
+            main {
+                width: min(100% - 20px, 1100px);
+                margin-top: 18px;
+            }
+
+            .match-title {
+                display: block;
+            }
+
+            .trace-grid {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .player-name {
+                margin-top: 8px;
+            }
+
+            .leader-row {
+                grid-template-columns: 28px minmax(90px, 1fr) 52px;
+            }
+
+            .bar-wrap {
+                grid-column: 2 / 4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Axelrod Tournament Debug Visual</h1>
+            <p>8-round Z3 debug trace with all 15 round-robin matches</p>
+            <div class="legend">
+                <span class="legend-item"><span class="legend-box cooperate"></span>Cooperate</span>
+                <span class="legend-item"><span class="legend-box defect"></span>Defect</span>
+            </div>
+        </header>
+
+        <section class="section-heading">
+            <h2>Starter tournament</h2>
+            <p>The original two demo matches from the Forge version.</p>
+        </section>
+        
+    <section class="match">
+        <div class="match-title">
+            <h2>MatchOne</h2>
+            <p>TFTPlayer (TitForTat) vs ADPlayer (AlwaysDefect)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">TFTPlayer</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">ADPlayer</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">0-5</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>TFTPlayer total: <strong>7</strong></span>
+            <span>ADPlayer total: <strong>12</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>MatchTwo</h2>
+            <p>ACPlayer (AlwaysCooperate) vs GrimPlayer (GrimTrigger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">ACPlayer</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">GrimPlayer</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>ACPlayer total: <strong>24</strong></span>
+            <span>GrimPlayer total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+        <section class="section-heading">
+            <h2>Round robin traces</h2>
+            <p>All 15 strategy matchups, including self matches.</p>
+        </section>
+        
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysCooperate_vs_AlwaysCooperate</h2>
+            <p>AlwaysCooperate (AlwaysCooperate) vs AlwaysCooperate (AlwaysCooperate)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysCooperate total: <strong>24</strong></span>
+            <span>AlwaysCooperate total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysCooperate_vs_AlwaysDefect</h2>
+            <p>AlwaysCooperate (AlwaysCooperate) vs AlwaysDefect (AlwaysDefect)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysCooperate total: <strong>0</strong></span>
+            <span>AlwaysDefect total: <strong>40</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysCooperate_vs_TitForTat</h2>
+            <p>AlwaysCooperate (AlwaysCooperate) vs TitForTat (TitForTat)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysCooperate total: <strong>24</strong></span>
+            <span>TitForTat total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysCooperate_vs_GrimTrigger</h2>
+            <p>AlwaysCooperate (AlwaysCooperate) vs GrimTrigger (GrimTrigger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysCooperate total: <strong>24</strong></span>
+            <span>GrimTrigger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysCooperate_vs_Nydegger</h2>
+            <p>AlwaysCooperate (AlwaysCooperate) vs Nydegger (Nydegger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysCooperate total: <strong>24</strong></span>
+            <span>Nydegger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysCooperate_vs_Random</h2>
+            <p>AlwaysCooperate (AlwaysCooperate) vs Random (Random)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysCooperate</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">0-5</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysCooperate total: <strong>15</strong></span>
+            <span>Random total: <strong>30</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysDefect_vs_AlwaysDefect</h2>
+            <p>AlwaysDefect (AlwaysDefect) vs AlwaysDefect (AlwaysDefect)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysDefect total: <strong>8</strong></span>
+            <span>AlwaysDefect total: <strong>8</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysDefect_vs_TitForTat</h2>
+            <p>AlwaysDefect (AlwaysDefect) vs TitForTat (TitForTat)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysDefect total: <strong>12</strong></span>
+            <span>TitForTat total: <strong>7</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysDefect_vs_GrimTrigger</h2>
+            <p>AlwaysDefect (AlwaysDefect) vs GrimTrigger (GrimTrigger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysDefect total: <strong>12</strong></span>
+            <span>GrimTrigger total: <strong>7</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysDefect_vs_Nydegger</h2>
+            <p>AlwaysDefect (AlwaysDefect) vs Nydegger (Nydegger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysDefect total: <strong>12</strong></span>
+            <span>Nydegger total: <strong>7</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>AlwaysDefect_vs_Random</h2>
+            <p>AlwaysDefect (AlwaysDefect) vs Random (Random)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">AlwaysDefect</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>AlwaysDefect total: <strong>20</strong></span>
+            <span>Random total: <strong>5</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>TitForTat_vs_TitForTat</h2>
+            <p>TitForTat (TitForTat) vs TitForTat (TitForTat)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>TitForTat total: <strong>24</strong></span>
+            <span>TitForTat total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>TitForTat_vs_GrimTrigger</h2>
+            <p>TitForTat (TitForTat) vs GrimTrigger (GrimTrigger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>TitForTat total: <strong>24</strong></span>
+            <span>GrimTrigger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>TitForTat_vs_Nydegger</h2>
+            <p>TitForTat (TitForTat) vs Nydegger (Nydegger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>TitForTat total: <strong>24</strong></span>
+            <span>Nydegger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>TitForTat_vs_Random</h2>
+            <p>TitForTat (TitForTat) vs Random (Random)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">TitForTat</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">0-5</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>TitForTat total: <strong>18</strong></span>
+            <span>Random total: <strong>23</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>GrimTrigger_vs_GrimTrigger</h2>
+            <p>GrimTrigger (GrimTrigger) vs GrimTrigger (GrimTrigger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>GrimTrigger total: <strong>24</strong></span>
+            <span>GrimTrigger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>GrimTrigger_vs_Nydegger</h2>
+            <p>GrimTrigger (GrimTrigger) vs Nydegger (Nydegger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>GrimTrigger total: <strong>24</strong></span>
+            <span>Nydegger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>GrimTrigger_vs_Random</h2>
+            <p>GrimTrigger (GrimTrigger) vs Random (Random)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">GrimTrigger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">0-5</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>GrimTrigger total: <strong>15</strong></span>
+            <span>Random total: <strong>10</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>Nydegger_vs_Nydegger</h2>
+            <p>Nydegger (Nydegger) vs Nydegger (Nydegger)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>Nydegger total: <strong>24</strong></span>
+            <span>Nydegger total: <strong>24</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>Nydegger_vs_Random</h2>
+            <p>Nydegger (Nydegger) vs Random (Random)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">Nydegger</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
+    
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">0-5</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>Nydegger total: <strong>27</strong></span>
+            <span>Random total: <strong>7</strong></span>
+        </div>
+    </section>
+    
+
+    <section class="match">
+        <div class="match-title">
+            <h2>Random_vs_Random</h2>
+            <p>Random (Random) vs Random (Random)</p>
+        </div>
+
+        <div class="trace-grid">
+            <div class="player-name">round</div>
+            <div class="rounds"><div class="round-cell">1</div>
+<div class="round-cell">2</div>
+<div class="round-cell">3</div>
+<div class="round-cell">4</div>
+<div class="round-cell">5</div>
+<div class="round-cell">6</div>
+<div class="round-cell">7</div>
+<div class="round-cell">8</div></div>
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">Random</div>
+        <div class="moves"><div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
+<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div></div>
+    
+            
+        <div class="player-name">score</div>
+        <div class="scores"><div class="score-cell">1-1</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">1-1</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div></div>
+    
+        </div>
+
+        <div class="totals">
+            <span>Random total: <strong>21</strong></span>
+            <span>Random total: <strong>16</strong></span>
+        </div>
+    </section>
+    
+
+        
+    <section class="leaderboard">
+        <h2>Strategy leaderboard</h2>
+        <p>Scores from the 8-round round robin.</p>
+        <div class="leader-table">
+            
+            <div class="leader-row winner">
+                <div class="leader-rank">1</div>
+                <div class="leader-name">Nydegger</div>
+                <div class="bar-wrap"><div class="bar" style="width: 100%"></div></div>
+                <div class="leader-score">154</div>
+            </div>
+            
+            <div class="leader-row">
+                <div class="leader-rank">2</div>
+                <div class="leader-name">TitForTat</div>
+                <div class="bar-wrap"><div class="bar" style="width: 94%"></div></div>
+                <div class="leader-score">145</div>
+            </div>
+            
+            <div class="leader-row">
+                <div class="leader-rank">3</div>
+                <div class="leader-name">GrimTrigger</div>
+                <div class="bar-wrap"><div class="bar" style="width: 92%"></div></div>
+                <div class="leader-score">142</div>
+            </div>
+            
+            <div class="leader-row">
+                <div class="leader-rank">4</div>
+                <div class="leader-name">AlwaysCooperate</div>
+                <div class="bar-wrap"><div class="bar" style="width: 88%"></div></div>
+                <div class="leader-score">135</div>
+            </div>
+            
+            <div class="leader-row">
+                <div class="leader-rank">5</div>
+                <div class="leader-name">AlwaysDefect</div>
+                <div class="bar-wrap"><div class="bar" style="width: 73%"></div></div>
+                <div class="leader-score">112</div>
+            </div>
+            
+            <div class="leader-row">
+                <div class="leader-rank">6</div>
+                <div class="leader-name">Random</div>
+                <div class="bar-wrap"><div class="bar" style="width: 73%"></div></div>
+                <div class="leader-score">112</div>
+            </div>
+            
+        </div>
+        <div class="winner-text">best strategy: <strong>Nydegger</strong></div>
+    </section>
+    
+    </main>
+</body>
+</html>

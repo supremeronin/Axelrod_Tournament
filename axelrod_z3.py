@@ -25,6 +25,7 @@ TIT_FOR_TAT = "TitForTat"
 GRIM_TRIGGER = "GrimTrigger"
 NYDEGGER = "Nydegger"
 RANDOM = "Random"
+RANDOM_SEED = 1710
 
 # starting set of strategies
 STARTER_STRATEGIES = (
@@ -104,7 +105,11 @@ def payoff_to_second(left_move, right_move):
     )
 
 
-def strategy_constraints(strategy: str, own_moves, opponent_moves):
+def random_pattern(rounds: int, seed_label: str) -> list[int]:
+    rng = random.Random(f"{RANDOM_SEED}:{seed_label}:{rounds}")
+    return [rng.choice([COOPERATE, DEFECT]) for _ in range(rounds)]
+
+def strategy_constraints(strategy: str, own_moves, opponent_moves, seed_label: str):
     # returns rules that force a player's moves to match their strategy
     if strategy == ALWAYS_COOPERATE:
         return [move == COOPERATE for move in own_moves]
@@ -161,11 +166,8 @@ def strategy_constraints(strategy: str, own_moves, opponent_moves):
     if strategy == RANDOM:
         # RANDOM strategy: use Python's random to generate a random sequence,
         # then constrain Z3 to follow it
-        constraints = []
-        for move in own_moves:
-            random_choice = random.choice([COOPERATE, DEFECT])
-            constraints.append(move == random_choice)
-        return constraints
+        pattern = random_pattern(len(own_moves), seed_label)
+        return [own_moves[round_index] == pattern[round_index] for round_index in range(len(own_moves))]
 
     raise ValueError(f"unknown strategy: {strategy}")
 
@@ -203,8 +205,8 @@ def solve_match(config: MatchConfig) -> MatchResult:
         solver.add(legal_action(move))
 
     # each player sees the other player's moves as the opponent history
-    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves))
-    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves))
+    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves, f"{config.name}:left:{config.left.name}"))
+    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves, f"{config.name}:right:{config.right.name}"))
 
     # symbolic score expressions for each round
     left_scores = [payoff_to_first(left_moves[i], right_moves[i]) for i in range(config.rounds)]
@@ -333,13 +335,13 @@ def format_leaderboard(matches: Iterable[MatchResult]) -> str:
 def is_unique_match_solution(config: MatchConfig) -> bool:
     # checks whether the strategy rules force exactly one possible trace.
     solver = Solver()
-    left_moves = [Int(f"unique_{config.name}_{config.left.name}_move_{round_index}") for round_index in range(config.rounds)]
-    right_moves = [Int(f"unique_{config.name}_{config.right.name}_move_{round_index}") for round_index in range(config.rounds)]
+    left_moves = [Int(f"unique_{config.name}_left_{config.left.name}_move_{round_index}") for round_index in range(config.rounds)]
+    right_moves = [Int(f"unique_{config.name}_right_{config.right.name}_move_{round_index}") for round_index in range(config.rounds)]
 
     for move in left_moves + right_moves:
         solver.add(legal_action(move))
-    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves))
-    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves))
+    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves, f"unique:{config.name}:left:{config.left.name}"))
+    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves, f"unique:{config.name}:right:{config.right.name}"))
 
     if solver.check() != sat:
         return False

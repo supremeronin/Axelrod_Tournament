@@ -4,6 +4,7 @@ from axelrod_z3 import (
     COOPERATE,
     DEFECT,
     GRIM_TRIGGER,
+    RANDOM,
     TIT_FOR_TAT,
     MatchConfig,
     PlayerConfig,
@@ -65,13 +66,29 @@ def test_grim_trigger_defects_after_first_opponent_defection():
     assert [round_result.right_move for round_result in result.rounds] == [COOPERATE, DEFECT, DEFECT, DEFECT, DEFECT]
 
 
+def test_random_self_match_uses_two_different_patterns():
+    # checks that Random vs Random is not accidentally using the same moves for both players
+    result = solve_match(
+        MatchConfig(
+            name="Random_vs_Random",
+            left=PlayerConfig("Random", RANDOM),
+            right=PlayerConfig("Random", RANDOM),
+            rounds=8,
+        )
+    )
+
+    assert [round_result.left_move for round_result in result.rounds] == [DEFECT, COOPERATE, COOPERATE, DEFECT, DEFECT, DEFECT, COOPERATE, COOPERATE]
+    assert [round_result.right_move for round_result in result.rounds] == [DEFECT, COOPERATE, DEFECT, DEFECT, COOPERATE, COOPERATE, COOPERATE, COOPERATE]
+
+
 def test_round_robin_scores_show_best_strategy_for_current_scope():
     # checks the leaderboard for the current small strategy set we have
     results = strategy_round_robin(8)
     totals = totals_by_strategy(results)
 
-    assert totals[ALWAYS_DEFECT] == 80
-    assert totals[TIT_FOR_TAT] == 103
-    assert totals[GRIM_TRIGGER] == 103
-    assert totals[ALWAYS_COOPERATE] == 96
-    assert best_strategies(results) == [(GRIM_TRIGGER, 103), (TIT_FOR_TAT, 103)]
+    assert totals[ALWAYS_DEFECT] == 100
+    assert totals[TIT_FOR_TAT] == 121
+    assert totals[GRIM_TRIGGER] == 118
+    assert totals[ALWAYS_COOPERATE] == 111
+    assert totals[RANDOM] == 105
+    assert best_strategies(results) == [(TIT_FOR_TAT, 121)]
