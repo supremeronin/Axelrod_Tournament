@@ -23,6 +23,7 @@ ALWAYS_COOPERATE = "AlwaysCooperate"
 ALWAYS_DEFECT = "AlwaysDefect"
 TIT_FOR_TAT = "TitForTat"
 GRIM_TRIGGER = "GrimTrigger"
+NYDEGGER = "Nydegger"
 RANDOM = "Random"
 
 # starting set of strategies
@@ -31,6 +32,7 @@ STARTER_STRATEGIES = (
     ALWAYS_DEFECT,
     TIT_FOR_TAT,
     GRIM_TRIGGER,
+    NYDEGGER,
     RANDOM
 )
 
@@ -124,6 +126,36 @@ def strategy_constraints(strategy: str, own_moves, opponent_moves):
         for round_index in range(1, len(own_moves)):
             opponent_defected_before = Or(*[opponent_moves[past] == DEFECT for past in range(round_index)])
             constraints.append(own_moves[round_index] == If(opponent_defected_before, DEFECT, COOPERATE))
+        return constraints
+    
+    if strategy == NYDEGGER:
+        # Nydegger strategy:
+        # - Cooperate in round 1
+        # - In round 2, cooperate if opponent cooperated in round 1, else defect
+        # - From round 3 onward:
+        #   - If opponent ever defected in rounds 1-2, play Grim Trigger (defect forever)
+        #   - Otherwise, play Tit for Tat
+        constraints = [own_moves[0] == COOPERATE]
+        
+        if len(own_moves) > 1:
+            # Round 2: mirror opponent's move from round 1
+            constraints.append(own_moves[1] == opponent_moves[0])
+        
+        # Round 3 and beyond
+        if len(own_moves) > 2:
+            # Check if opponent defected in rounds 1 or 2
+            opponent_defected_early = Or(opponent_moves[0] == DEFECT, opponent_moves[1] == DEFECT)
+            for round_index in range(2, len(own_moves)):
+                # If opponent defected in early rounds, defect forever (Grim Trigger)
+                # Otherwise, play Tit for Tat (copy opponent's last move)
+                constraints.append(
+                    own_moves[round_index] == If(
+                        opponent_defected_early,
+                        DEFECT,
+                        opponent_moves[round_index - 1]
+                    )
+                )
+        
         return constraints
     
     if strategy == RANDOM:
