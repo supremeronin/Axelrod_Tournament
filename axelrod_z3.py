@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Iterable
 import random
+import time
+from dataclasses import dataclass
+from typing import Iterable, Optional
 
 from z3 import And, If, Int, ModelRef, Or, Solver, Sum, sat
 
@@ -25,7 +26,6 @@ TIT_FOR_TAT = "TitForTat"
 GRIM_TRIGGER = "GrimTrigger"
 NYDEGGER = "Nydegger"
 RANDOM = "Random"
-RANDOM_SEED = 1710
 
 # starting set of strategies
 STARTER_STRATEGIES = (
@@ -105,11 +105,18 @@ def payoff_to_second(left_move, right_move):
     )
 
 
-def random_pattern(rounds: int, seed_label: str) -> list[int]:
-    rng = random.Random(f"{RANDOM_SEED}:{seed_label}:{rounds}")
+def new_random_seed() -> int:
+    # gives new seed so the Random player is actually random each different run
+    return time.time_ns()
+
+
+def random_pattern(rounds: int, seed_label: str, random_seed: int) -> list[int]:
+    # passing the seed in makes it possible to reproduce a run if we want to
+    rng = random.Random(f"{random_seed}:{seed_label}:{rounds}")
     return [rng.choice([COOPERATE, DEFECT]) for _ in range(rounds)]
 
-def strategy_constraints(strategy: str, own_moves, opponent_moves, seed_label: str):
+
+def strategy_constraints(strategy: str, own_moves, opponent_moves, seed_label: str, random_seed: int):
     # returns rules that force a player's moves to match their strategy
     if strategy == ALWAYS_COOPERATE:
         return [move == COOPERATE for move in own_moves]
@@ -166,7 +173,7 @@ def strategy_constraints(strategy: str, own_moves, opponent_moves, seed_label: s
     if strategy == RANDOM:
         # RANDOM strategy: use Python's random to generate a random sequence,
         # then constrain Z3 to follow it
-        pattern = random_pattern(len(own_moves), seed_label)
+        pattern = random_pattern(len(own_moves), seed_label, random_seed)
         return [own_moves[round_index] == pattern[round_index] for round_index in range(len(own_moves))]
 
     raise ValueError(f"unknown strategy: {strategy}")
@@ -187,11 +194,13 @@ def _model_int(model: ModelRef, expr) -> int:
     return value.as_long()
 
 
-def solve_match(config: MatchConfig) -> MatchResult:
+def solve_match(config: MatchConfig, random_seed: Optional[int] = None) -> MatchResult:
     # makes a Z3 variable for each player's move in each round,
     # adds the strategy and payoff rules, and then asks Z3 for a trace
     if config.rounds < 1:
         raise ValueError("rounds must be positive")
+    if random_seed is None:
+        random_seed = new_random_seed()
 
     solver = Solver()
 
@@ -205,8 +214,8 @@ def solve_match(config: MatchConfig) -> MatchResult:
         solver.add(legal_action(move))
 
     # each player sees the other player's moves as the opponent history
-    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves, f"{config.name}:left:{config.left.name}"))
-    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves, f"{config.name}:right:{config.right.name}"))
+    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves, f"{config.name}:left:{config.left.name}", random_seed))
+    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves, f"{config.name}:right:{config.right.name}", random_seed))
 
     # symbolic score expressions for each round
     left_scores = [payoff_to_first(left_moves[i], right_moves[i]) for i in range(config.rounds)]
@@ -238,7 +247,9 @@ def solve_match(config: MatchConfig) -> MatchResult:
     )
 
 
-def starter_tournament(rounds: int) -> tuple[MatchResult, ...]:
+def starter_tournament(rounds: int, random_seed: Optional[int] = None) -> tuple[MatchResult, ...]:
+    if random_seed is None:
+        random_seed = new_random_seed()
     return (
         solve_match(
             MatchConfig(
@@ -246,7 +257,8 @@ def starter_tournament(rounds: int) -> tuple[MatchResult, ...]:
                 left=PlayerConfig("TFTPlayer", TIT_FOR_TAT),
                 right=PlayerConfig("ADPlayer", ALWAYS_DEFECT),
                 rounds=rounds,
-            )
+            ),
+            random_seed=random_seed,
         ),
         solve_match(
             MatchConfig(
@@ -254,13 +266,16 @@ def starter_tournament(rounds: int) -> tuple[MatchResult, ...]:
                 left=PlayerConfig("ACPlayer", ALWAYS_COOPERATE),
                 right=PlayerConfig("GrimPlayer", GRIM_TRIGGER),
                 rounds=rounds,
-            )
+            ),
+            random_seed=random_seed,
         ),
     )
 
 
-def strategy_round_robin(rounds: int, strategies: Iterable[str] = STARTER_STRATEGIES) -> tuple[MatchResult, ...]:
+def strategy_round_robin(rounds: int, strategies: Iterable[str] = STARTER_STRATEGIES, random_seed: Optional[int] = None) -> tuple[MatchResult, ...]:
     # runs every pair of strategies against each other one time
+    if random_seed is None:
+        random_seed = new_random_seed()
     strategies = tuple(strategies)
     matches = []
     for left_index, left_strategy in enumerate(strategies):
@@ -274,7 +289,8 @@ def strategy_round_robin(rounds: int, strategies: Iterable[str] = STARTER_STRATE
                         left=PlayerConfig(left_strategy, left_strategy),
                         right=PlayerConfig(right_strategy, right_strategy),
                         rounds=rounds,
-                    )
+                    ),
+                    random_seed=random_seed,
                 )
             )
     return tuple(matches)
@@ -332,16 +348,18 @@ def format_leaderboard(matches: Iterable[MatchResult]) -> str:
     return "\n".join(lines)
 
 
-def is_unique_match_solution(config: MatchConfig) -> bool:
+def is_unique_match_solution(config: MatchConfig, random_seed: Optional[int] = None) -> bool:
     # checks whether the strategy rules force exactly one possible trace.
+    if random_seed is None:
+        random_seed = new_random_seed()
     solver = Solver()
     left_moves = [Int(f"unique_{config.name}_left_{config.left.name}_move_{round_index}") for round_index in range(config.rounds)]
     right_moves = [Int(f"unique_{config.name}_right_{config.right.name}_move_{round_index}") for round_index in range(config.rounds)]
 
     for move in left_moves + right_moves:
         solver.add(legal_action(move))
-    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves, f"unique:{config.name}:left:{config.left.name}"))
-    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves, f"unique:{config.name}:right:{config.right.name}"))
+    solver.add(strategy_constraints(config.left.strategy, left_moves, right_moves, f"unique:{config.name}:left:{config.left.name}", random_seed))
+    solver.add(strategy_constraints(config.right.strategy, right_moves, left_moves, f"unique:{config.name}:right:{config.right.name}", random_seed))
 
     if solver.check() != sat:
         return False

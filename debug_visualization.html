@@ -59,6 +59,7 @@
 
         .legend {
             display: flex;
+            flex-wrap: wrap;
             gap: 14px;
             margin-top: 14px;
             color: var(--muted);
@@ -246,10 +247,11 @@
     <main>
         <header>
             <h1>Axelrod Tournament Debug Visual</h1>
-            <p>8-round Z3 debug trace with all 15 round-robin matches</p>
+            <p>8-round Z3 debug trace with all 21 round-robin matches</p>
             <div class="legend">
                 <span class="legend-item"><span class="legend-box cooperate"></span>Cooperate</span>
                 <span class="legend-item"><span class="legend-box defect"></span>Defect</span>
+                <span class="legend-item">random seed: <strong>1777601453381105000</strong></span>
             </div>
         </header>
 
@@ -376,7 +378,7 @@
 
         <section class="section-heading">
             <h2>Round robin traces</h2>
-            <p>All 15 strategy matchups, including self matches.</p>
+            <p>All 21 strategy matchups, including self matches.</p>
         </section>
         
     <section class="match">
@@ -700,9 +702,9 @@
         <div class="player-name">Random</div>
         <div class="moves"><div class="move defect">D</div>
 <div class="move cooperate">C</div>
-<div class="move cooperate">C</div>
-<div class="move cooperate">C</div>
 <div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
 <div class="move defect">D</div>
 <div class="move cooperate">C</div>
 <div class="move cooperate">C</div></div>
@@ -711,9 +713,9 @@
         <div class="player-name">score</div>
         <div class="scores"><div class="score-cell">0-5</div>
 <div class="score-cell">3-3</div>
-<div class="score-cell">3-3</div>
-<div class="score-cell">3-3</div>
 <div class="score-cell">0-5</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
 <div class="score-cell">0-5</div>
 <div class="score-cell">3-3</div>
 <div class="score-cell">3-3</div></div>
@@ -988,31 +990,31 @@
     
             
         <div class="player-name">Random</div>
-        <div class="moves"><div class="move defect">D</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
-<div class="move cooperate">C</div>
 <div class="move cooperate">C</div></div>
     
             
         <div class="player-name">score</div>
-        <div class="scores"><div class="score-cell">1-1</div>
+        <div class="scores"><div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div>
 <div class="score-cell">5-0</div>
 <div class="score-cell">1-1</div>
 <div class="score-cell">1-1</div>
 <div class="score-cell">1-1</div>
 <div class="score-cell">1-1</div>
-<div class="score-cell">5-0</div>
 <div class="score-cell">5-0</div></div>
     
         </div>
 
         <div class="totals">
-            <span>AlwaysDefect total: <strong>20</strong></span>
-            <span>Random total: <strong>5</strong></span>
+            <span>AlwaysDefect total: <strong>24</strong></span>
+            <span>Random total: <strong>4</strong></span>
         </div>
     </section>
     
@@ -1212,20 +1214,20 @@
         <div class="moves"><div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
-<div class="move cooperate">C</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
 <div class="move cooperate">C</div>
+<div class="move defect">D</div>
 <div class="move cooperate">C</div></div>
     
             
         <div class="player-name">Random</div>
         <div class="moves"><div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
-<div class="move cooperate">C</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
 <div class="move cooperate">C</div>
+<div class="move defect">D</div>
 <div class="move cooperate">C</div>
 <div class="move defect">D</div></div>
     
@@ -1233,18 +1235,18 @@
         <div class="player-name">score</div>
         <div class="scores"><div class="score-cell">3-3</div>
 <div class="score-cell">3-3</div>
-<div class="score-cell">3-3</div>
 <div class="score-cell">0-5</div>
 <div class="score-cell">1-1</div>
 <div class="score-cell">5-0</div>
-<div class="score-cell">3-3</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">5-0</div>
 <div class="score-cell">0-5</div></div>
     
         </div>
 
         <div class="totals">
-            <span>TitForTat total: <strong>18</strong></span>
-            <span>Random total: <strong>23</strong></span>
+            <span>TitForTat total: <strong>17</strong></span>
+            <span>Random total: <strong>22</strong></span>
         </div>
     </section>
     
@@ -1384,9 +1386,9 @@
             
         <div class="player-name">GrimTrigger</div>
         <div class="moves"><div class="move cooperate">C</div>
-<div class="move defect">D</div>
-<div class="move defect">D</div>
-<div class="move defect">D</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
@@ -1394,31 +1396,31 @@
     
             
         <div class="player-name">Random</div>
-        <div class="moves"><div class="move defect">D</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
 <div class="move defect">D</div>
-<div class="move defect">D</div>
-<div class="move defect">D</div>
-<div class="move defect">D</div>
 <div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move defect">D</div>
 <div class="move defect">D</div></div>
     
             
         <div class="player-name">score</div>
-        <div class="scores"><div class="score-cell">0-5</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">3-3</div>
+<div class="score-cell">0-5</div>
+<div class="score-cell">5-0</div>
 <div class="score-cell">5-0</div>
 <div class="score-cell">1-1</div>
-<div class="score-cell">1-1</div>
-<div class="score-cell">1-1</div>
-<div class="score-cell">1-1</div>
-<div class="score-cell">5-0</div>
 <div class="score-cell">1-1</div></div>
     
         </div>
 
         <div class="totals">
-            <span>GrimTrigger total: <strong>15</strong></span>
-            <span>Random total: <strong>10</strong></span>
+            <span>GrimTrigger total: <strong>21</strong></span>
+            <span>Random total: <strong>16</strong></span>
         </div>
     </section>
     
@@ -1515,8 +1517,8 @@
 <div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
-<div class="move defect">D</div>
 <div class="move cooperate">C</div>
+<div class="move defect">D</div>
 <div class="move cooperate">C</div></div>
     
             
@@ -1526,8 +1528,8 @@
 <div class="score-cell">5-0</div>
 <div class="score-cell">5-0</div>
 <div class="score-cell">5-0</div>
-<div class="score-cell">1-1</div>
 <div class="score-cell">5-0</div>
+<div class="score-cell">1-1</div>
 <div class="score-cell">5-0</div></div>
     
         </div>
@@ -1557,42 +1559,42 @@
 <div class="round-cell">8</div></div>
             
         <div class="player-name">Random</div>
-        <div class="moves"><div class="move defect">D</div>
-<div class="move cooperate">C</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move defect">D</div>
 <div class="move cooperate">C</div>
 <div class="move defect">D</div>
 <div class="move defect">D</div>
-<div class="move defect">D</div>
 <div class="move cooperate">C</div>
-<div class="move cooperate">C</div></div>
+<div class="move defect">D</div>
+<div class="move defect">D</div></div>
     
             
         <div class="player-name">Random</div>
-        <div class="moves"><div class="move defect">D</div>
+        <div class="moves"><div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
+<div class="move cooperate">C</div>
 <div class="move cooperate">C</div>
 <div class="move defect">D</div>
-<div class="move defect">D</div>
-<div class="move cooperate">C</div>
-<div class="move cooperate">C</div>
-<div class="move cooperate">C</div>
 <div class="move cooperate">C</div></div>
     
             
         <div class="player-name">score</div>
-        <div class="scores"><div class="score-cell">1-1</div>
+        <div class="scores"><div class="score-cell">3-3</div>
+<div class="score-cell">5-0</div>
 <div class="score-cell">3-3</div>
-<div class="score-cell">0-5</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">5-0</div>
+<div class="score-cell">3-3</div>
 <div class="score-cell">1-1</div>
-<div class="score-cell">5-0</div>
-<div class="score-cell">5-0</div>
-<div class="score-cell">3-3</div>
-<div class="score-cell">3-3</div></div>
+<div class="score-cell">5-0</div></div>
     
         </div>
 
         <div class="totals">
-            <span>Random total: <strong>21</strong></span>
-            <span>Random total: <strong>16</strong></span>
+            <span>Random total: <strong>30</strong></span>
+            <span>Random total: <strong>10</strong></span>
         </div>
     </section>
     
@@ -1612,16 +1614,16 @@
             
             <div class="leader-row">
                 <div class="leader-rank">2</div>
-                <div class="leader-name">TitForTat</div>
-                <div class="bar-wrap"><div class="bar" style="width: 94%"></div></div>
-                <div class="leader-score">145</div>
+                <div class="leader-name">GrimTrigger</div>
+                <div class="bar-wrap"><div class="bar" style="width: 96%"></div></div>
+                <div class="leader-score">148</div>
             </div>
             
             <div class="leader-row">
                 <div class="leader-rank">3</div>
-                <div class="leader-name">GrimTrigger</div>
-                <div class="bar-wrap"><div class="bar" style="width: 92%"></div></div>
-                <div class="leader-score">142</div>
+                <div class="leader-name">TitForTat</div>
+                <div class="bar-wrap"><div class="bar" style="width: 94%"></div></div>
+                <div class="leader-score">144</div>
             </div>
             
             <div class="leader-row">
@@ -1633,16 +1635,16 @@
             
             <div class="leader-row">
                 <div class="leader-rank">5</div>
-                <div class="leader-name">AlwaysDefect</div>
-                <div class="bar-wrap"><div class="bar" style="width: 73%"></div></div>
-                <div class="leader-score">112</div>
+                <div class="leader-name">Random</div>
+                <div class="bar-wrap"><div class="bar" style="width: 77%"></div></div>
+                <div class="leader-score">119</div>
             </div>
             
             <div class="leader-row">
                 <div class="leader-rank">6</div>
-                <div class="leader-name">Random</div>
-                <div class="bar-wrap"><div class="bar" style="width: 73%"></div></div>
-                <div class="leader-score">112</div>
+                <div class="leader-name">AlwaysDefect</div>
+                <div class="bar-wrap"><div class="bar" style="width: 75%"></div></div>
+                <div class="leader-score">116</div>
             </div>
             
         </div>

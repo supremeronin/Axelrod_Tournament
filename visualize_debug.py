@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from html import escape
 from pathlib import Path
 
@@ -121,11 +122,12 @@ def render_leaderboard(matches: tuple[MatchResult, ...]) -> str:
     """
 
 
-def render_page(starter_matches: tuple[MatchResult, ...], round_robin: tuple[MatchResult, ...]) -> str:
+def render_page(starter_matches: tuple[MatchResult, ...], round_robin: tuple[MatchResult, ...], random_seed: int) -> str:
     # puts the whole visual page together
     starter_matches_html = "\n".join(render_match(match) for match in starter_matches)
     round_robin_html = "\n".join(render_match(match) for match in round_robin)
     leaderboard_html = render_leaderboard(round_robin)
+    match_count = len(round_robin)
 
     return f"""<!doctype html>
 <html lang="en">
@@ -188,6 +190,7 @@ def render_page(starter_matches: tuple[MatchResult, ...], round_robin: tuple[Mat
 
         .legend {{
             display: flex;
+            flex-wrap: wrap;
             gap: 14px;
             margin-top: 14px;
             color: var(--muted);
@@ -375,10 +378,11 @@ def render_page(starter_matches: tuple[MatchResult, ...], round_robin: tuple[Mat
     <main>
         <header>
             <h1>Axelrod Tournament Debug Visual</h1>
-            <p>8-round Z3 debug trace with all 15 round-robin matches</p>
+            <p>8-round Z3 debug trace with all {match_count} round-robin matches</p>
             <div class="legend">
                 <span class="legend-item"><span class="legend-box cooperate"></span>Cooperate</span>
                 <span class="legend-item"><span class="legend-box defect"></span>Defect</span>
+                <span class="legend-item">random seed: <strong>{random_seed}</strong></span>
             </div>
         </header>
 
@@ -390,7 +394,7 @@ def render_page(starter_matches: tuple[MatchResult, ...], round_robin: tuple[Mat
 
         <section class="section-heading">
             <h2>Round robin traces</h2>
-            <p>All 15 strategy matchups, including self matches.</p>
+            <p>All {match_count} strategy matchups, including self matches.</p>
         </section>
         {round_robin_html}
 
@@ -402,9 +406,12 @@ def render_page(starter_matches: tuple[MatchResult, ...], round_robin: tuple[Mat
 
 
 def main() -> None:
-    starter_matches = starter_tournament(ROUNDS)
-    round_robin = strategy_round_robin(ROUNDS)
-    OUTPUT_FILE.write_text(render_page(starter_matches, round_robin), encoding="utf-8")
+    # seed changes each time so the Random strategy changes in the visual
+    random_seed = time.time_ns()
+    starter_matches = starter_tournament(ROUNDS, random_seed=random_seed)
+    round_robin = strategy_round_robin(ROUNDS, random_seed=random_seed)
+    OUTPUT_FILE.write_text(render_page(starter_matches, round_robin, random_seed), encoding="utf-8")
+    print(f"random seed: {random_seed}")
     print(f"wrote {OUTPUT_FILE}")
 
 
