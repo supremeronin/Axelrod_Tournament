@@ -32,7 +32,7 @@ Grim Trigger: Starts by cooperating but once the opponent defects just once, Gri
 
 Random: Makes a random list of moves before the match is solved. So for each round, Python chooses either C or D, then constraints are given saying Random has to follow that exact list for that match. But for this to be different across runs, we had to use a seed which controls which random pattern gets made. If we don't pass in a seed then a new one will be made using the current time.
 
-Nydegger: 
+Nydegger: Starts with tit-for-tat for 2 rounds. If the opponent defected in the first two rounds, plays as grim trigger for the rest of the game. Else, continues to play as tit-for-tat.
 
 
 
